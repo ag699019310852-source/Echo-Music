@@ -3239,6 +3239,26 @@ class MusicService :
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
+
+        // Keep background playback alive when the user dismisses the UI while a song is
+        // actually playing. If playback is paused/stopped, however, there is no reason to
+        // retain the foreground service or its MediaSession notification.
+        if (::player.isInitialized && !player.isPlaying) {
+            Timber.tag(TAG).d("App task removed while playback is inactive; stopping service")
+
+            // Stop the playback engine first so Media3 cannot promote the service again and
+            // recreate the notification after it has been dismissed.
+            player.stop()
+
+            // Remove both the foreground-service notification and any notification last
+            // published by Media3's notification provider.
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
+
+            // onDestroy() releases the MediaLibrarySession, player, audio focus and other
+            // resources. Releasing the session there also removes Android's media controls.
+            stopSelf()
+        }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
