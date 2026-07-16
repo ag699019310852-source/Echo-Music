@@ -28,7 +28,6 @@ include(
     ":youlyplus",
     ":shazamkit",
     ":artistvideo",
-    ":jiosaavn",
     ":canvas",
     ":echomusiccanvas",
     ":applecanvas",
